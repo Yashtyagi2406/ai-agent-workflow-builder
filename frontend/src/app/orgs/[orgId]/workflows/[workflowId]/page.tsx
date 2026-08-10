@@ -44,6 +44,10 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   const [triggeringLocal, setTriggeringLocal] = useState(false);
 
   async function handleRunWorkflow() {
+    if (!workflow?.workflow_steps || workflow.workflow_steps.length === 0) {
+      alert("This workflow has no steps yet! Add steps below (e.g., '🤖 LLM Call', '🔒 Approval Gate') and click 'Save Steps' first.");
+      return;
+    }
     setTriggeringLocal(true);
     try {
       const res = await triggerRun({ variables: { workflow_id: workflowId } });
