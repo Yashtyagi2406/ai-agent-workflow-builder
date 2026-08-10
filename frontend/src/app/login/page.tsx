@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSignInEmailPassword, useSignUpEmailPassword } from '@nhost/react';
 import { useRouter } from 'next/navigation';
+import { setDemoSession, clearDemoSession } from '@/lib/demoSession';
 
 const HASURA_URL = process.env.NEXT_PUBLIC_HASURA_URL || 'http://localhost:8080/v1/graphql';
 
@@ -23,6 +24,9 @@ export default function LoginPage() {
   async function handleLoginSuccess(userEmail: string) {
     setLoadingLocal(true);
     try {
+      // Record who is logged in for page-level org-isolation checks.
+      setDemoSession(userEmail);
+
       // Direct POST to Hasura v1/graphql
       const res = await fetch(HASURA_URL, {
         method: 'POST',
@@ -82,6 +86,8 @@ export default function LoginPage() {
     setEmail(userEmail);
     setPassword('Password123!');
     setError('');
+    // Write demo session FIRST so isolation guards have context immediately.
+    setDemoSession(userEmail);
     await handleLoginSuccess(userEmail);
   }
 
