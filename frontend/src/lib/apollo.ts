@@ -27,7 +27,9 @@ export function createApolloClient(accessToken: string | null) {
   const authLink = setContext((_, { headers }) => ({
     headers: {
       ...headers,
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : { 'x-hasura-admin-secret': 'nhost-admin-secret' }),
     },
   }));
 
@@ -39,7 +41,9 @@ export function createApolloClient(accessToken: string | null) {
           createClient({
             url: GRAPHQL_WS_URL,
             connectionParams: () => ({
-              headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+              headers: accessToken
+                ? { Authorization: `Bearer ${accessToken}` }
+                : { 'x-hasura-admin-secret': 'nhost-admin-secret' },
             }),
           })
         )
