@@ -38,47 +38,50 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      {/* Background glow */}
+    <div className="min-h-screen bg-[#080d1a] flex items-center justify-center p-4 selection:bg-violet-500/30">
+      {/* Background ambient glow */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-violet-600/15 rounded-full blur-[120px]" />
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-indigo-600/15 rounded-full blur-[120px]" />
       </div>
 
-      <div className="w-full max-w-md animate-fade-in-up">
-        {/* Logo */}
+      <div className="w-full max-w-md animate-fade-in-up relative z-10">
+        {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 mb-4 glow-violet">
-            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 mb-4 glow-violet shadow-xl">
+            <svg className="w-7 h-7 text-white" width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5}
                 d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold gradient-text">FlowMind</h1>
-          <p className="text-slate-400 mt-1 text-sm">AI Agent Workflow Builder</p>
+          <h1 className="text-3xl font-extrabold tracking-tight gradient-text">FlowMind</h1>
+          <p className="text-slate-400 mt-1.5 text-sm font-medium">AI Agent Workflow Builder</p>
         </div>
 
-        <div className="glass p-8">
-          {/* Tab switcher */}
-          <div className="flex gap-1 p-1 bg-slate-800/60 rounded-xl mb-6">
+        {/* Auth Card */}
+        <div className="glass p-8 shadow-2xl">
+          {/* Mode Switcher Tabs */}
+          <div className="flex gap-1 p-1 bg-slate-950/80 rounded-xl mb-6 border border-slate-800/80">
             <button
               id="tab-signin"
+              type="button"
               onClick={() => setMode('signin')}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                 mode === 'signin'
-                  ? 'bg-violet-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-slate-300'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               Sign In
             </button>
             <button
               id="tab-signup"
+              type="button"
               onClick={() => setMode('signup')}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`flex-1 py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                 mode === 'signup'
-                  ? 'bg-violet-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-slate-300'
+                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               Sign Up
@@ -93,7 +96,7 @@ export default function LoginPage() {
                   id="displayName"
                   type="text"
                   className="input"
-                  placeholder="Your name"
+                  placeholder="John Doe"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                 />
@@ -101,12 +104,12 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="label" htmlFor="email">Email</label>
+              <label className="label" htmlFor="email">Email Address</label>
               <input
                 id="email"
                 type="email"
                 className="input"
-                placeholder="you@example.com"
+                placeholder="owner-orga@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -130,7 +133,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-red-950/60 border border-red-900/50 text-red-400 text-sm">
+              <div className="p-3.5 rounded-xl bg-red-950/70 border border-red-900/60 text-red-400 text-xs font-medium">
                 {error}
               </div>
             )}
@@ -139,7 +142,7 @@ export default function LoginPage() {
               id="btn-auth-submit"
               type="submit"
               disabled={loading}
-              className="btn-primary w-full justify-center"
+              className="btn-primary w-full justify-center py-3 mt-2"
             >
               {loading ? (
                 <>
@@ -153,6 +156,34 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Quick Demo Credentials Footer */}
+          <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
+            <p className="text-xs text-slate-500 font-medium">Demo Seed Accounts (Password: <code className="text-violet-400">Password123!</code>)</p>
+            <div className="flex justify-center gap-2 mt-2 flex-wrap text-[11px]">
+              <button
+                type="button"
+                onClick={() => { setEmail('owner-orga@example.com'); setPassword('Password123!'); }}
+                className="px-2 py-1 rounded bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 border border-slate-700/50 cursor-pointer"
+              >
+                Org A Owner
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmail('editor-orga@example.com'); setPassword('Password123!'); }}
+                className="px-2 py-1 rounded bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 border border-slate-700/50 cursor-pointer"
+              >
+                Org A Editor
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEmail('owner-orgb@example.com'); setPassword('Password123!'); }}
+                className="px-2 py-1 rounded bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 border border-slate-700/50 cursor-pointer"
+              >
+                Org B Owner
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
