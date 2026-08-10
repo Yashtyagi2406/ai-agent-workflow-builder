@@ -32,7 +32,7 @@ services:
       HASURA_GRAPHQL_JWT_SECRET: '{"type":"HS256","key":"0f987876650b4a085e64594ae9db11924e58af04bde99ba8bbc3726f5b0fa7ef"}'
       HASURA_GRAPHQL_ENABLE_REMOTE_SCHEMA_PERMISSIONS: "true"
       HASURA_GRAPHQL_UNAUTHORIZED_ROLE: "public"
-      NHOST_FUNCTIONS_URL: http://host.docker.internal:3000
+      NHOST_FUNCTIONS_URL: http://host.docker.internal:5005
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

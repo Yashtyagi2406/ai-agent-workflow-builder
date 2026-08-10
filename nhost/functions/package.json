@@ -2,8 +2,10 @@
   "name": "ai-workflow-functions",
   "version": "1.0.0",
   "private": true,
-  "main": "index.js",
+  "main": "server.ts",
   "scripts": {
+    "dev": "npx tsx server.ts",
+    "start": "npx tsx server.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
@@ -11,6 +13,7 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
+    "tsx": "^4.19.0",
     "typescript": "^5.4.0",
     "@types/node": "^20.0.0"
   },

@@ -9,7 +9,8 @@
     "init-hasura": "npx tsx scripts/init-hasura.ts",
     "seed": "npx tsx scripts/init-hasura.ts && npx tsx scripts/seed.ts",
     "dev:functions": "cd nhost/functions && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev"
+    "dev:frontend": "cd frontend && npm run dev",
+    "test:integration": "npx tsx scripts/test-integration.ts"
   },
   "devDependencies": {
     "tsx": "^4.19.0",
