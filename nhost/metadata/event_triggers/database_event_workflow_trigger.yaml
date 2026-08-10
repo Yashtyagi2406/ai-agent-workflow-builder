@@ -1,0 +1,19 @@
+- name: database_event_workflow_trigger
+  definition:
+    enable_manual: false
+    insert:
+      columns: "*"
+    update:
+      columns: "*"
+  table:
+    name: workflow_results
+    schema: public
+  webhook: "{{NHOST_FUNCTIONS_URL}}/eventTriggerHandler"
+  headers:
+    - name: x-hasura-admin-secret
+      value_from_env: HASURA_GRAPHQL_ADMIN_SECRET
+  retry_conf:
+    interval_sec: 10
+    num_retries: 3
+    timeout_sec: 60
+  comment: "Fires when a row is inserted or updated in workflow_results — for demo of database_event trigger type"

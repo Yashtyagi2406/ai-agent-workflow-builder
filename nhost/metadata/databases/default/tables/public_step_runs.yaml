@@ -1,0 +1,50 @@
+table:
+  name: step_runs
+  schema: public
+object_relationships:
+  - name: workflow_run
+    using:
+      foreign_key_constraint_on: workflow_run_id
+  - name: workflow_step
+    using:
+      foreign_key_constraint_on: workflow_step_id
+  - name: approver
+    using:
+      manual_configuration:
+        remote_table:
+          name: users
+          schema: auth
+        column_mapping:
+          approved_by: id
+select_permissions:
+  - role: owner
+    permission:
+      columns: "*"
+      filter:
+        workflow_run:
+          workflow:
+            organization:
+              org_members:
+                user_id:
+                  _eq: X-Hasura-User-Id
+  - role: editor
+    permission:
+      columns: "*"
+      filter:
+        workflow_run:
+          workflow:
+            organization:
+              org_members:
+                user_id:
+                  _eq: X-Hasura-User-Id
+  - role: viewer
+    permission:
+      columns: "*"
+      filter:
+        workflow_run:
+          workflow:
+            organization:
+              org_members:
+                user_id:
+                  _eq: X-Hasura-User-Id
+# Updates happen only via Action (service role) — no client update permission

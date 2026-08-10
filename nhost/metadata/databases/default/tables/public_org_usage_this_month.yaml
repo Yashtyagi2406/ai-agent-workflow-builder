@@ -1,0 +1,67 @@
+table:
+  name: org_usage_this_month
+  schema: public
+select_permissions:
+  - role: owner
+    permission:
+      columns:
+        - org_id
+        - org_name
+        - calls_allowed
+        - calls_used
+        - pct_used
+        - avg_run_duration_seconds
+        - runs_this_month
+      filter:
+        org_id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+  - role: editor
+    permission:
+      columns:
+        - org_id
+        - org_name
+        - calls_allowed
+        - calls_used
+        - pct_used
+        - avg_run_duration_seconds
+        - runs_this_month
+      filter:
+        org_id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+  - role: viewer
+    permission:
+      columns:
+        - org_id
+        - org_name
+        - calls_allowed
+        - calls_used
+        - pct_used
+        - runs_this_month
+      filter:
+        org_id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+is_enum: false
