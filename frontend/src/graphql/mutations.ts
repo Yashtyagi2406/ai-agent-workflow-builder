@@ -82,7 +82,7 @@ export const DELETE_WORKFLOW = gql`
 
 export const TRIGGER_WORKFLOW_RUN = gql`
   mutation TriggerWorkflowRun($workflow_id: uuid!) {
-    triggerWorkflowRun(workflow_id: $workflow_id) {
+    triggerWorkflowRun(input: { workflow_id: $workflow_id }) {
       workflow_run_id
       status
       message
@@ -92,7 +92,7 @@ export const TRIGGER_WORKFLOW_RUN = gql`
 
 export const APPROVE_STEP = gql`
   mutation ApproveStep($step_run_id: uuid!) {
-    approveStep(step_run_id: $step_run_id) {
+    approveStep(input: { step_run_id: $step_run_id }) {
       step_run_id
       status
       message
