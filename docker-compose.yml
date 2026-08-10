@@ -1,0 +1,4 @@
+# nhost local dev is normally run via `nhost up` (nhost CLI), not docker-compose directly.
+# This file is a placeholder if you need custom services alongside it.
+version: "3.8"
+services: {}
