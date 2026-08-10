@@ -27,6 +27,7 @@ interface StepRun {
 
 interface RunPanelProps {
   runId: string;
+  orgId: string;
   userRole?: string;
   onApproved: () => void;
 }
@@ -40,7 +41,7 @@ const STEP_TYPE_ICONS: Record<string, string> = {
   approval_gate: '🔒',
 };
 
-export function RunPanel({ runId, userRole, onApproved }: RunPanelProps) {
+export function RunPanel({ runId, orgId, userRole, onApproved }: RunPanelProps) {
   const canApprove = userRole === 'owner' || userRole === 'editor';
 
   const { data: runData, loading: runLoading } = useSubscription(SUB_WORKFLOW_RUN, {
@@ -71,6 +72,7 @@ export function RunPanel({ runId, userRole, onApproved }: RunPanelProps) {
     } catch {
       // Fallback to direct HTTP fetch
       try {
+        const demoUserId = (orgId === '7f18f670-cc04-42b3-b01c-515629a674e9' ? 'bc162e09-b10d-44ea-9734-1a2a066fe5a3' : 'aba1cfb2-3348-495a-9268-ac304fc0de0a');
         const fetchRes = await fetch('http://localhost:5005/approveStep', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -78,7 +80,7 @@ export function RunPanel({ runId, userRole, onApproved }: RunPanelProps) {
             action: { name: 'approveStep' },
             input: { step_run_id: pendingStep.id },
             session_variables: {
-              'x-hasura-user-id': 'aba1cfb2-3348-495a-9268-ac304fc0de0a',
+              'x-hasura-user-id': demoUserId,
               'x-hasura-role': userRole || 'owner',
             },
           }),
