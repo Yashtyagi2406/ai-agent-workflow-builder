@@ -226,6 +226,39 @@ async function initHasura() {
     }).catch(() => {});
   }
 
+  // Insert permissions for owner and editor
+  for (const role of ['owner', 'editor']) {
+    await queryEndpoint('metadata', 'pg_create_insert_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'workflows' },
+      role,
+      permission: {
+        check: {},
+        columns: '*',
+      },
+    }).catch(() => {});
+
+    await queryEndpoint('metadata', 'pg_create_insert_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'workflow_steps' },
+      role,
+      permission: {
+        check: {},
+        columns: '*',
+      },
+    }).catch(() => {});
+
+    await queryEndpoint('metadata', 'pg_create_insert_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'workflow_triggers' },
+      role,
+      permission: {
+        check: {},
+        columns: '*',
+      },
+    }).catch(() => {});
+  }
+
   // 6. Register Hasura Actions in metadata
   await queryEndpoint('metadata', 'set_custom_types', {
     scalars: [],
