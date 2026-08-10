@@ -1,8 +1,11 @@
 import { gql } from '@apollo/client';
 
 export const GET_USER_ORGS = gql`
-  query GetUserOrgs {
-    org_members(order_by: { created_at: asc }) {
+  query GetUserOrgs($user_id: uuid!) {
+    org_members(
+      where: { user_id: { _eq: $user_id } }
+      order_by: { created_at: asc }
+    ) {
       id
       role
       organization {
@@ -48,8 +51,11 @@ export const GET_ORG_WORKFLOWS = gql`
 `;
 
 export const GET_WORKFLOW_DETAIL = gql`
-  query GetWorkflowDetail($id: uuid!) {
-    workflows_by_pk(id: $id) {
+  query GetWorkflowDetail($id: uuid!, $org_id: uuid!) {
+    workflows(
+      where: { id: { _eq: $id }, org_id: { _eq: $org_id } }
+      limit: 1
+    ) {
       id
       name
       description

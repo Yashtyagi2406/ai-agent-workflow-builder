@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { useUserData } from '@nhost/react';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,7 @@ import { RunPanel } from '@/components/RunStatus/RunPanel';
 import { QuotaIndicator } from '@/components/QuotaIndicator';
 import { OrgSwitcher } from '@/components/OrgSwitcher';
 import { useSignOut } from '@nhost/react';
+import { getDemoSession, type DemoSession } from '@/lib/demoSession';
 
 interface PageProps {
   params: { orgId: string; workflowId: string };
@@ -28,18 +29,40 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('builder');
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
-  const { data: orgsData } = useQuery(GET_USER_ORGS);
+  // ── Demo session ──────────────────────────────────────────────────────────
+  // Read who is logged in from localStorage so we can scope every query to
+  // only the data owned by that specific user / org.
+  const [demoSession, setDemoSessionState] = useState<DemoSession | null>(null);
+  useEffect(() => { setDemoSessionState(getDemoSession()); }, []);
+
+  // Fast guard: if the session org doesn't match the URL org the user is
+  // attempting cross-org access — block immediately, don't even fire queries.
+  const sessionOrgMismatch =
+    demoSession !== null && demoSession.orgId !== orgId;
+
+  // ── User orgs (scoped to current demo user) ───────────────────────────────
+  const { data: orgsData } = useQuery(GET_USER_ORGS, {
+    variables: { user_id: demoSession?.userId ?? '' },
+    skip: !demoSession?.userId || sessionOrgMismatch,
+  });
   const orgs = orgsData?.org_members ?? [];
-  const membership = orgs.find((m: { organization: { id: string }; role: string }) => m.organization.id === orgId);
-  const userRole = membership?.role ?? 'owner';
+  const membership = orgs.find(
+    (m: { organization: { id: string }; role: string }) =>
+      m.organization.id === orgId,
+  );
+  // SECURITY: no fallback to 'owner'. If membership is undefined the user is
+  // not a member of this org — canEdit will be false and access will be denied.
+  const userRole = membership?.role as string | undefined;
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
+  // ── Workflow detail (filtered by BOTH id AND org_id) ─────────────────────
   const { data, loading, refetch } = useQuery(GET_WORKFLOW_DETAIL, {
-    variables: { id: workflowId },
-    skip: !workflowId,
+    variables: { id: workflowId, org_id: orgId },
+    skip: !workflowId || sessionOrgMismatch,
   });
 
-  const workflow = data?.workflows_by_pk;
+  // Query now returns workflows[] (not workflows_by_pk) so we take index 0.
+  const workflow = data?.workflows?.[0];
 
   const [triggeringLocal, setTriggeringLocal] = useState(false);
   const [zeroStepsError, setZeroStepsError] = useState(false);
@@ -64,7 +87,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
     } catch {
       // Fallback to direct HTTP fetch to functions server
       try {
-        const demoUserId = user?.id ?? (orgId === '7f18f670-cc04-42b3-b01c-515629a674e9' ? 'bc162e09-b10d-44ea-9734-1a2a066fe5a3' : 'aba1cfb2-3348-495a-9268-ac304fc0de0a');
+        const demoUserId = user?.id ?? demoSession?.userId ?? 'aba1cfb2-3348-495a-9268-ac304fc0de0a';
         const fetchRes = await fetch('http://localhost:5005/triggerWorkflowRun', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -101,6 +124,41 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   });
 
   if (loading) return <LoadingSpinner />;
+
+  // ── Explicit cross-org access denied guard ────────────────────────────────
+  // This check is intentionally NOT delegated to Hasura alone.  Even if the
+  // DB query returned data, we reject it here when the session org doesn't
+  // match the URL org or when the user has no membership in this org.
+  const isUnauthorized =
+    sessionOrgMismatch ||
+    (demoSession !== null && orgsData !== undefined && !membership);
+
+  if (isUnauthorized) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+        <div className="glass p-10 text-center max-w-sm w-full space-y-5">
+          <div className="w-16 h-16 rounded-2xl bg-red-950/60 border border-red-900/50 flex items-center justify-center mx-auto">
+            <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-red-400">Access Denied</h2>
+          <p className="text-slate-400 text-sm">
+            You don&apos;t have permission to view this workflow.
+            It belongs to a different organisation.
+          </p>
+          <button
+            onClick={() => router.back()}
+            className="btn-primary w-full justify-center"
+          >
+            ← Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!workflow) return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="glass p-8 text-center">

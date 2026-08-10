@@ -4,9 +4,11 @@ import { useQuery, gql } from '@apollo/client';
 import { useAuthenticationStatus, useSignOut, useUserData } from '@nhost/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { GET_USER_ORGS, GET_ORG_USAGE, GET_ORG_WORKFLOWS } from '@/graphql/queries';
 import { OrgSwitcher } from '@/components/OrgSwitcher';
 import { QuotaIndicator } from '@/components/QuotaIndicator';
+import { getDemoSession, type DemoSession } from '@/lib/demoSession';
 
 interface PageProps {
   params: { orgId: string };
@@ -29,7 +31,13 @@ export default function OrgDashboard({ params }: PageProps) {
   const router = useRouter();
   const { signOut } = useSignOut();
 
-  const { data: userOrgsData, loading: userOrgsLoading } = useQuery(GET_USER_ORGS);
+  const [demoSession, setDemoSessionState] = useState<DemoSession | null>(null);
+  useEffect(() => { setDemoSessionState(getDemoSession()); }, []);
+
+  const { data: userOrgsData, loading: userOrgsLoading } = useQuery(GET_USER_ORGS, {
+    variables: { user_id: demoSession?.userId ?? '' },
+    skip: !demoSession?.userId,
+  });
   const { data: directOrgData, loading: directOrgLoading } = useQuery(GET_ORG_BY_PK, {
     variables: { id: orgId },
   });
@@ -38,7 +46,8 @@ export default function OrgDashboard({ params }: PageProps) {
   const currentMembership = orgs.find((m: { organization: { id: string }; role: string }) => m.organization.id === orgId);
   
   const currentOrg = currentMembership?.organization || directOrgData?.organizations_by_pk;
-  const userRole = currentMembership?.role || 'owner';
+  // SECURITY: no fallback to 'owner' — undefined means no membership in this org.
+  const userRole = currentMembership?.role as string | undefined;
 
   const loading = userOrgsLoading && directOrgLoading;
 
