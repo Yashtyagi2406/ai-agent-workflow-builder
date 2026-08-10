@@ -27,16 +27,27 @@ async function gql<T = Record<string, unknown>>(
 }
 
 async function signUpUser(email: string, password: string, displayName: string): Promise<string> {
-  const res = await fetch(`${AUTH_URL}/signup/email-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, options: { displayName } }),
-  });
-  const json = await res.json() as { session?: { user?: { id: string } }; error?: { message: string } };
-  if (json.error) throw new Error(json.error.message);
-  const userId = json.session?.user?.id;
-  if (!userId) throw new Error('No user ID in signup response');
-  return userId;
+  try {
+    const res = await fetch(`${AUTH_URL}/signup/email-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, options: { displayName } }),
+    });
+    if (res.ok) {
+      const json = (await res.json()) as { session?: { user?: { id: string } }; error?: { message: string } };
+      if (json.session?.user?.id) return json.session.user.id;
+    }
+  } catch {
+    // Fallback to direct DB insert via Hasura for standalone Docker dev
+  }
+
+  const data = await gql<{ insert_auth_users_one: { id: string } }>(
+    `mutation InsertUser($email: String!) {
+      insert_auth_users_one(object: { email: $email }, on_conflict: { constraint: users_email_key, update_columns: [] }) { id }
+    }`,
+    { email }
+  );
+  return data.insert_auth_users_one.id;
 }
 
 async function createOrg(name: string): Promise<string> {

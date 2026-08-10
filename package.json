@@ -6,10 +6,10 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f",
-    "seed": "npx tsx scripts/seed.ts",
+    "init-hasura": "npx tsx scripts/init-hasura.ts",
+    "seed": "npx tsx scripts/init-hasura.ts && npx tsx scripts/seed.ts",
     "dev:functions": "cd nhost/functions && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "install:all": "cd nhost/functions && npm install && cd "../../frontend" && npm install"
+    "dev:frontend": "cd frontend && npm run dev"
   },
   "devDependencies": {
     "tsx": "^4.19.0",

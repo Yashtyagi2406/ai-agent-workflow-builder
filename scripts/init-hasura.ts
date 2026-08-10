@@ -1,0 +1,117 @@
+import fs from 'fs';
+import path from 'path';
+
+const HASURA_BASE = process.env.HASURA_GRAPHQL_URL
+  ? process.env.HASURA_GRAPHQL_URL.replace('/v1/graphql', '')
+  : 'http://localhost:8080';
+
+const ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET ?? 'nhost-admin-secret';
+
+async function queryEndpoint(endpoint: string, type: string, args: Record<string, unknown>) {
+  const res = await fetch(`${HASURA_BASE}/v1/${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-hasura-admin-secret': ADMIN_SECRET,
+    },
+    body: JSON.stringify({ type, args }),
+  });
+  return res.json();
+}
+
+async function initHasura() {
+  console.log('⚡ Initializing Hasura & Postgres schema…');
+
+  // 1. Create auth schema and mock auth.users table if not present
+  const initAuthSql = `
+    create schema if not exists auth;
+    create table if not exists auth.users (
+      id uuid primary key default gen_random_uuid(),
+      email text unique,
+      created_at timestamptz default now()
+    );
+  `;
+  await queryEndpoint('query', 'run_sql', { source: 'default', sql: initAuthSql, cascade: true });
+
+  // 2. Read and apply all up.sql migrations in order
+  const migDir = path.join(process.cwd(), 'nhost/migrations/default');
+  const folders = fs.readdirSync(migDir).sort();
+  for (const folder of folders) {
+    const upPath = path.join(migDir, folder, 'up.sql');
+    if (fs.existsSync(upPath)) {
+      const sql = fs.readFileSync(upPath, 'utf8');
+      console.log(`  Applying migration: ${folder}…`);
+      const result = await queryEndpoint('query', 'run_sql', { source: 'default', sql, cascade: true });
+      if (result?.error) {
+        console.warn(`  Warning in ${folder}:`, result.error.message || result.error);
+      }
+    }
+  }
+
+  // 3. Track all tables and views in Hasura
+  const tables = [
+    { schema: 'auth', name: 'users' },
+    { schema: 'public', name: 'organizations' },
+    { schema: 'public', name: 'org_members' },
+    { schema: 'public', name: 'workflows' },
+    { schema: 'public', name: 'workflow_steps' },
+    { schema: 'public', name: 'workflow_triggers' },
+    { schema: 'public', name: 'workflow_runs' },
+    { schema: 'public', name: 'step_runs' },
+    { schema: 'public', name: 'org_usage_this_month' },
+    { schema: 'public', name: 'workflow_results' },
+  ];
+
+  for (const table of tables) {
+    await queryEndpoint('metadata', 'pg_track_table', {
+      source: 'default',
+      table,
+    }).catch(() => {});
+  }
+
+  // 4. Track relationships
+  await queryEndpoint('metadata', 'pg_create_object_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'workflows' },
+    name: 'organization',
+    using: { foreign_key_constraint_on: 'org_id' },
+  }).catch(() => {});
+
+  await queryEndpoint('metadata', 'pg_create_array_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'workflows' },
+    name: 'workflow_steps',
+    using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'workflow_steps' }, column: 'workflow_id' } },
+  }).catch(() => {});
+
+  await queryEndpoint('metadata', 'pg_create_array_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'workflows' },
+    name: 'workflow_triggers',
+    using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'workflow_triggers' }, column: 'workflow_id' } },
+  }).catch(() => {});
+
+  await queryEndpoint('metadata', 'pg_create_array_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'workflows' },
+    name: 'workflow_runs',
+    using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'workflow_runs' }, column: 'workflow_id' } },
+  }).catch(() => {});
+
+  await queryEndpoint('metadata', 'pg_create_array_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'workflow_runs' },
+    name: 'step_runs',
+    using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'step_runs' }, column: 'workflow_run_id' } },
+  }).catch(() => {});
+
+  // Reload metadata
+  await queryEndpoint('metadata', 'reload_metadata', {});
+
+  console.log('✅ Hasura schema initialization complete!\n');
+}
+
+initHasura().catch((err) => {
+  console.error('❌ Hasura initialization failed:', err);
+  process.exit(1);
+});
