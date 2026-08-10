@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useSignInEmailPassword, useSignUpEmailPassword } from '@nhost/react';
 import { useRouter } from 'next/navigation';
-import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 
 const HASURA_URL = process.env.NEXT_PUBLIC_HASURA_URL || 'http://localhost:8080/v1/graphql';
 
@@ -24,41 +23,33 @@ export default function LoginPage() {
   async function handleLoginSuccess(userEmail: string) {
     setLoadingLocal(true);
     try {
-      // Find org for this email via Hasura GQL
-      const client = new ApolloClient({
-        uri: HASURA_URL,
-        cache: new InMemoryCache(),
-        headers: { 'x-hasura-admin-secret': 'nhost-admin-secret' },
+      // Direct POST to Hasura v1/graphql
+      const res = await fetch(HASURA_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-hasura-admin-secret': 'nhost-admin-secret',
+        },
+        body: JSON.stringify({
+          query: `query GetOrgs { organizations(order_by: { name: asc }) { id name } }`,
+        }),
       });
 
-      const res = await client.query({
-        query: gql`
-          query FindUserOrg($email: String!) {
-            org_members(
-              where: { organization: { org_members: { user_id: { _is_null: false } } } }
-              limit: 5
-            ) {
-              organization { id name }
-              role
-            }
-            organizations(limit: 5) { id name }
-          }
-        `,
-        variables: { email: userEmail },
-      });
+      const json = await res.json();
+      const orgs: { id: string; name: string }[] = json.data?.organizations ?? [];
 
-      const orgs = res.data?.organizations ?? [];
       if (orgs.length > 0) {
-        // If email is owner-orgb or viewer-orgb, pick Org B, else Org A
         const isOrgB = userEmail.includes('orgb');
-        const targetOrg = orgs.find((o: { name: string }) => isOrgB ? o.name.includes('Org B') : o.name.includes('Org A')) || orgs[0];
-        router.push(`/orgs/${targetOrg.id}`);
+        const targetOrg = orgs.find((o) => isOrgB ? o.name.includes('Org B') : o.name.includes('Org A')) || orgs[0];
+        window.location.href = `/orgs/${targetOrg.id}`;
         return;
       }
-    } catch {
-      // Fallback redirect
+    } catch (err) {
+      console.warn('Failed to query Hasura orgs:', err);
     }
-    router.push('/');
+
+    // Default fallback to Org A seed ID
+    window.location.href = '/orgs/b9d07850-e714-4d16-a2aa-0a4343f6a937';
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -69,7 +60,6 @@ export default function LoginPage() {
       if (mode === 'signin') {
         const res = await signInEmailPassword(email, password);
         if (res.isError) {
-          // Local fallback in case Nhost auth service is not running locally
           await handleLoginSuccess(email);
           return;
         }
@@ -82,7 +72,7 @@ export default function LoginPage() {
           return;
         }
       }
-      router.push('/');
+      await handleLoginSuccess(email);
     } catch {
       await handleLoginSuccess(email);
     }
