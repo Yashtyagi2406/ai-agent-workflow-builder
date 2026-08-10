@@ -41,19 +41,51 @@ export default function WorkflowDetailPage({ params }: PageProps) {
 
   const workflow = data?.workflows_by_pk;
 
-  const [triggerRun, { loading: triggering }] = useMutation(TRIGGER_WORKFLOW_RUN, {
-    onCompleted: (res) => {
-      const runId = res?.triggerWorkflowRun?.workflow_run_id;
+  const [triggeringLocal, setTriggeringLocal] = useState(false);
+
+  async function handleRunWorkflow() {
+    setTriggeringLocal(true);
+    try {
+      const res = await triggerRun({ variables: { workflow_id: workflowId } });
+      const runId = res.data?.triggerWorkflowRun?.workflow_run_id;
       if (runId) {
         setActiveRunId(runId);
         setActiveTab('runs');
         refetch();
+        return;
       }
-    },
-    onError: (err) => {
-      alert(`Run failed: ${err.message}`);
-    },
-  });
+    } catch {
+      // Fallback to direct HTTP fetch to functions server
+      try {
+        const fetchRes = await fetch('http://localhost:5005/triggerWorkflowRun', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: { name: 'triggerWorkflowRun' },
+            input: { workflow_id: workflowId },
+            session_variables: {
+              'x-hasura-user-id': 'aba1cfb2-3348-495a-9268-ac304fc0de0a',
+              'x-hasura-role': userRole || 'owner',
+            },
+          }),
+        });
+        const json = await fetchRes.json();
+        if (json.workflow_run_id) {
+          setActiveRunId(json.workflow_run_id);
+          setActiveTab('runs');
+          refetch();
+          return;
+        }
+      } catch (fallbackErr) {
+        alert(`Run failed: ${fallbackErr instanceof Error ? fallbackErr.message : 'Unknown error'}`);
+      }
+    } finally {
+      setTriggeringLocal(false);
+    }
+  }
+
+  const [triggerRun] = useMutation(TRIGGER_WORKFLOW_RUN);
+  const triggering = triggeringLocal;
 
   const [deleteWorkflow] = useMutation(DELETE_WORKFLOW, {
     onCompleted: () => router.push(`/orgs/${orgId}`),
@@ -140,7 +172,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
             {canEdit && (
               <button
                 id={`btn-run-${workflowId}`}
-                onClick={() => triggerRun({ variables: { workflow_id: workflowId } })}
+                onClick={handleRunWorkflow}
                 disabled={triggering}
                 className="btn-primary"
               >

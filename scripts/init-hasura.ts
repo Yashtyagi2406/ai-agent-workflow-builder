@@ -226,6 +226,64 @@ async function initHasura() {
     }).catch(() => {});
   }
 
+  // 6. Register Hasura Actions in metadata
+  await queryEndpoint('metadata', 'set_custom_types', {
+    scalars: [],
+    enums: [],
+    input_objects: [
+      {
+        name: 'TriggerWorkflowRunInput',
+        fields: [{ name: 'workflow_id', type: 'uuid!' }],
+      },
+      {
+        name: 'ApproveStepInput',
+        fields: [{ name: 'step_run_id', type: 'uuid!' }],
+      },
+    ],
+    objects: [
+      {
+        name: 'WorkflowRunResult',
+        fields: [
+          { name: 'workflow_run_id', type: 'uuid!' },
+          { name: 'status', type: 'String!' },
+          { name: 'message', type: 'String!' },
+        ],
+      },
+      {
+        name: 'ApproveStepResult',
+        fields: [
+          { name: 'step_run_id', type: 'uuid!' },
+          { name: 'status', type: 'String!' },
+          { name: 'message', type: 'String!' },
+        ],
+      },
+    ],
+  }).catch(() => {});
+
+  const functionsUrl = process.env.NHOST_FUNCTIONS_URL || 'http://host.docker.internal:5005';
+
+  await queryEndpoint('metadata', 'create_action', {
+    name: 'triggerWorkflowRun',
+    definition: {
+      kind: 'synchronous',
+      handler: `${functionsUrl}/triggerWorkflowRun`,
+      arguments: [{ name: 'input', type: 'TriggerWorkflowRunInput!' }],
+      output_type: 'WorkflowRunResult',
+      forward_client_headers: true,
+    },
+  }).catch(() => {});
+
+  await queryEndpoint('metadata', 'create_action', {
+    name: 'approveStep',
+    definition: {
+      kind: 'synchronous',
+      handler: `${functionsUrl}/approveStep`,
+      arguments: [{ name: 'input', type: 'ApproveStepInput!' }],
+      output_type: 'ApproveStepResult',
+      forward_client_headers: true,
+    },
+  }).catch(() => {});
+
   // Reload metadata
   await queryEndpoint('metadata', 'reload_metadata', {});
 
