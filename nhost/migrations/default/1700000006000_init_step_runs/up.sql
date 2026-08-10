@@ -2,7 +2,7 @@
 create table if not exists public.step_runs (
   id uuid primary key default gen_random_uuid(),
   workflow_run_id uuid not null references public.workflow_runs(id) on delete cascade,
-  workflow_step_id uuid not null references public.workflow_steps(id),
+  workflow_step_id uuid not null references public.workflow_steps(id) on delete cascade,
   status text not null check (status in (
     'pending', 'running', 'succeeded', 'failed', 'paused_awaiting_approval', 'skipped'
   )) default 'pending',

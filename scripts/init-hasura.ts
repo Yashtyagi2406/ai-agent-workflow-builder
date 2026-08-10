@@ -49,6 +49,26 @@ async function initHasura() {
   }
 
   // 3. Track all tables and views in Hasura
+  await queryEndpoint('v2/query', 'run_sql', {
+    source: 'default',
+    sql: `
+      ALTER TABLE public.workflow_steps DROP CONSTRAINT IF EXISTS workflow_steps_workflow_id_fkey;
+      ALTER TABLE public.workflow_steps ADD CONSTRAINT workflow_steps_workflow_id_fkey FOREIGN KEY (workflow_id) REFERENCES public.workflows(id) ON DELETE CASCADE;
+
+      ALTER TABLE public.workflow_triggers DROP CONSTRAINT IF EXISTS workflow_triggers_workflow_id_fkey;
+      ALTER TABLE public.workflow_triggers ADD CONSTRAINT workflow_triggers_workflow_id_fkey FOREIGN KEY (workflow_id) REFERENCES public.workflows(id) ON DELETE CASCADE;
+
+      ALTER TABLE public.workflow_runs DROP CONSTRAINT IF EXISTS workflow_runs_workflow_id_fkey;
+      ALTER TABLE public.workflow_runs ADD CONSTRAINT workflow_runs_workflow_id_fkey FOREIGN KEY (workflow_id) REFERENCES public.workflows(id) ON DELETE CASCADE;
+
+      ALTER TABLE public.step_runs DROP CONSTRAINT IF EXISTS step_runs_workflow_run_id_fkey;
+      ALTER TABLE public.step_runs ADD CONSTRAINT step_runs_workflow_run_id_fkey FOREIGN KEY (workflow_run_id) REFERENCES public.workflow_runs(id) ON DELETE CASCADE;
+
+      ALTER TABLE public.step_runs DROP CONSTRAINT IF EXISTS step_runs_workflow_step_id_fkey;
+      ALTER TABLE public.step_runs ADD CONSTRAINT step_runs_workflow_step_id_fkey FOREIGN KEY (workflow_step_id) REFERENCES public.workflow_steps(id) ON DELETE CASCADE;
+    `,
+  }).catch(() => {});
+
   const tables = [
     { schema: 'auth', name: 'users' },
     { schema: 'public', name: 'organizations' },
