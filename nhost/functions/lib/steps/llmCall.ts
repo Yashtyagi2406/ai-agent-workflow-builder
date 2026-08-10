@@ -49,7 +49,10 @@ export async function executeLlmCall(
   } else {
     // Default: Groq
     apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
-    model = config.model || 'llama3-8b-8192';
+    const reqModel = config.model || 'llama-3.3-70b-versatile';
+    model = (reqModel === 'llama3-8b-8192' || reqModel === 'llama3-70b-8192' || reqModel === 'mixtral-8x7b-32768')
+      ? 'llama-3.3-70b-versatile'
+      : reqModel;
     authHeader = `Bearer ${LLM_API_KEY}`;
   }
 
