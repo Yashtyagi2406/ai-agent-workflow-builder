@@ -104,6 +104,13 @@ async function initHasura() {
     using: { foreign_key_constraint_on: 'org_id' },
   }).catch(() => {});
 
+  await queryEndpoint('metadata', 'pg_create_object_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'org_members' },
+    name: 'organization',
+    using: { foreign_key_constraint_on: 'org_id' },
+  }).catch(() => {});
+
   await queryEndpoint('metadata', 'pg_create_array_relationship', {
     source: 'default',
     table: { schema: 'public', name: 'workflows' },

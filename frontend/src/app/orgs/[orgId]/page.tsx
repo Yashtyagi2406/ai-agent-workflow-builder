@@ -53,7 +53,7 @@ export default function OrgDashboard({ params }: PageProps) {
   // SECURITY: no fallback to 'owner' — undefined means no membership in this org.
   const userRole = currentMembership?.role as string | undefined;
 
-  const loading = userOrgsLoading && directOrgLoading;
+  const loading = !sessionLoaded || (userOrgsLoading && !userOrgsData) || (directOrgLoading && !directOrgData);
 
   if (loading) {
     return <LoadingSkeleton />;
