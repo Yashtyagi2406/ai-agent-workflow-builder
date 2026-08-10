@@ -133,8 +133,23 @@ export function StepList({ workflowId, steps: initialSteps, canEdit, userRole, o
       {/* Step flow */}
       <div className="space-y-2 step-runner">
         {steps.length === 0 && (
-          <div className="glass-sm p-8 text-center">
-            <p className="text-slate-500 text-sm">No steps yet. Add a step below.</p>
+          <div className="glass-sm p-8 text-center space-y-3">
+            <p className="text-slate-400 text-sm">No steps yet. Click a step button below or load starter steps.</p>
+            {canEdit && (
+              <button
+                id="btn-add-starter-steps"
+                onClick={() => {
+                  setSteps([
+                    { step_order: 0, type: 'llm_call', config: { prompt: 'Analyze this task concisely.', model: 'llama-3.3-70b-versatile' } },
+                    { step_order: 1, type: 'approval_gate', config: { message: 'Require human approval before continuing.' } },
+                    { step_order: 2, type: 'notify', config: { channel: 'email', recipient: 'admin@org.com' } },
+                  ]);
+                }}
+                className="btn-secondary text-xs inline-flex items-center gap-1.5 border-violet-700/50 text-violet-300 hover:bg-violet-900/30 px-4 py-2"
+              >
+                ✨ Add Starter Steps (LLM + Approval + Notify)
+              </button>
+            )}
           </div>
         )}
 

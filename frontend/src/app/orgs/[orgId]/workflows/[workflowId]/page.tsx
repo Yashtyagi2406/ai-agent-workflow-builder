@@ -42,12 +42,14 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   const workflow = data?.workflows_by_pk;
 
   const [triggeringLocal, setTriggeringLocal] = useState(false);
+  const [zeroStepsError, setZeroStepsError] = useState(false);
 
   async function handleRunWorkflow() {
     if (!workflow?.workflow_steps || workflow.workflow_steps.length === 0) {
-      alert("This workflow has no steps yet! Add steps below (e.g., '🤖 LLM Call', '🔒 Approval Gate') and click 'Save Steps' first.");
+      setZeroStepsError(true);
       return;
     }
+    setZeroStepsError(false);
     setTriggeringLocal(true);
     try {
       const res = await triggerRun({ variables: { workflow_id: workflowId } });
@@ -207,6 +209,21 @@ export default function WorkflowDetailPage({ params }: PageProps) {
             )}
           </div>
         </div>
+
+        {zeroStepsError && (
+          <div className="glass border-amber-500/50 bg-amber-950/40 p-4 rounded-xl mb-6 flex items-center justify-between animate-fade-in-up">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">⚠️</span>
+              <div>
+                <p className="font-semibold text-amber-300">Workflow has no steps to run!</p>
+                <p className="text-sm text-amber-400/80">
+                  Add steps below (e.g. 🤖 LLM Call, 🔒 Approval Gate) and click <strong className="text-amber-200">Save Steps</strong> to save your workflow before running.
+                </p>
+              </div>
+            </div>
+            <button onClick={() => setZeroStepsError(false)} className="text-slate-400 hover:text-white px-3 py-1 text-sm font-semibold">✕</button>
+          </div>
+        )}
 
         {/* Tab switcher */}
         <div className="flex gap-1 p-1 bg-slate-800/40 rounded-xl mb-6 w-fit">
