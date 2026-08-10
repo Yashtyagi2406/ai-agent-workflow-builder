@@ -43,6 +43,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
 
   const [triggeringLocal, setTriggeringLocal] = useState(false);
   const [zeroStepsError, setZeroStepsError] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   async function handleRunWorkflow() {
     if (!workflow?.workflow_steps || workflow.workflow_steps.length === 0) {
@@ -202,7 +203,8 @@ export default function WorkflowDetailPage({ params }: PageProps) {
 
             {userRole === 'owner' && (
               <button
-                onClick={() => { if (confirm('Delete this workflow?')) deleteWorkflow({ variables: { id: workflowId } }); }}
+                id="btn-delete-workflow"
+                onClick={() => setShowDeleteModal(true)}
                 className="btn-danger"
               >
                 Delete
@@ -210,6 +212,43 @@ export default function WorkflowDetailPage({ params }: PageProps) {
             )}
           </div>
         </div>
+
+        {/* Custom Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+            <div className="glass max-w-md w-full p-6 space-y-4 border-red-500/30">
+              <div className="flex items-center gap-3 text-red-400">
+                <div className="w-10 h-10 rounded-xl bg-red-950/50 border border-red-800/40 flex items-center justify-center text-xl font-bold">🗑️</div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">Delete Workflow</h3>
+                  <p className="text-xs text-slate-400">This action cannot be undone.</p>
+                </div>
+              </div>
+              <p className="text-sm text-slate-300">
+                Are you sure you want to delete <strong className="text-white">{workflow.name}</strong>?
+              </p>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  id="btn-cancel-delete"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="btn-secondary text-xs px-4 py-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  id="btn-confirm-delete"
+                  onClick={() => {
+                    deleteWorkflow({ variables: { id: workflowId } });
+                    setShowDeleteModal(false);
+                  }}
+                  className="btn-danger text-xs px-4 py-2 bg-red-600 hover:bg-red-500"
+                >
+                  Yes, Delete Workflow
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {zeroStepsError && (
           <div className="glass border-amber-500/50 bg-amber-950/40 p-4 rounded-xl mb-6 flex items-center justify-between animate-fade-in-up">

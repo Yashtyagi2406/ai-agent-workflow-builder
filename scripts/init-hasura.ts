@@ -259,6 +259,16 @@ async function initHasura() {
     }).catch(() => {});
   }
 
+  // Delete permission for owner role
+  await queryEndpoint('metadata', 'pg_create_delete_permission', {
+    source: 'default',
+    table: { schema: 'public', name: 'workflows' },
+    role: 'owner',
+    permission: {
+      filter: {},
+    },
+  }).catch(() => {});
+
   // 6. Register Hasura Actions in metadata
   await queryEndpoint('metadata', 'set_custom_types', {
     scalars: [],
