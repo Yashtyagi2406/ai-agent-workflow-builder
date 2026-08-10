@@ -1,0 +1,31 @@
+type WorkflowRunResult {
+  workflow_run_id: uuid!
+  status: String!
+  message: String!
+}
+
+type ApproveStepResult {
+  step_run_id: uuid!
+  status: String!
+  message: String!
+}
+
+type WebhookTriggerResult {
+  workflow_run_id: uuid!
+  status: String!
+  message: String!
+}
+
+input TriggerWorkflowRunInput {
+  workflow_id: uuid!
+}
+
+input ApproveStepInput {
+  step_run_id: uuid!
+}
+
+input WebhookTriggerInput {
+  workflow_id: uuid!
+  api_key: String!
+  payload: jsonb
+}

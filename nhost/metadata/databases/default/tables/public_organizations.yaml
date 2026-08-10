@@ -1,0 +1,114 @@
+table:
+  name: organizations
+  schema: public
+object_relationships:
+  - name: usage
+    using:
+      manual_configuration:
+        remote_table:
+          name: org_usage_this_month
+          schema: public
+        column_mapping:
+          id: org_id
+array_relationships:
+  - name: org_members
+    using:
+      foreign_key_constraint_on:
+        column: org_id
+        table:
+          name: org_members
+          schema: public
+  - name: workflows
+    using:
+      foreign_key_constraint_on:
+        column: org_id
+        table:
+          name: workflows
+          schema: public
+select_permissions:
+  - role: owner
+    permission:
+      columns: "*"
+      filter:
+        id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+  - role: editor
+    permission:
+      columns:
+        - id
+        - name
+        - calls_allowed
+        - calls_used
+        - quota_period_start
+        - created_at
+      filter:
+        id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+  - role: viewer
+    permission:
+      columns:
+        - id
+        - name
+        - calls_allowed
+        - calls_used
+        - quota_period_start
+        - created_at
+      filter:
+        id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+update_permissions:
+  - role: owner
+    permission:
+      columns:
+        - name
+        - calls_allowed
+      filter:
+        id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+                role:
+                  _eq: owner
+      check:
+        id:
+          _in:
+            _select:
+              column: org_id
+              table:
+                name: org_members
+                schema: public
+              where:
+                user_id:
+                  _eq: X-Hasura-User-Id
+                role:
+                  _eq: owner

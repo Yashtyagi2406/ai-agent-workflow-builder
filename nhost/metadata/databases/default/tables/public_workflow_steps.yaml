@@ -1,0 +1,111 @@
+table:
+  name: workflow_steps
+  schema: public
+object_relationships:
+  - name: workflow
+    using:
+      foreign_key_constraint_on: workflow_id
+select_permissions:
+  - role: owner
+    permission:
+      columns: "*"
+      filter:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+  - role: editor
+    permission:
+      columns: "*"
+      filter:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+  - role: viewer
+    permission:
+      columns: "*"
+      filter:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+insert_permissions:
+  - role: owner
+    permission:
+      columns:
+        - workflow_id
+        - step_order
+        - type
+        - config
+      check:
+        workflow:
+          organization:
+            org_members:
+              _and:
+                - user_id:
+                    _eq: X-Hasura-User-Id
+                - role:
+                    _eq: owner
+  - role: editor
+    permission:
+      columns:
+        - workflow_id
+        - step_order
+        - type
+        - config
+      # Layer 2: DB trigger enforces that editors cannot add db_write/notify/approval_gate
+      check:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+update_permissions:
+  - role: owner
+    permission:
+      columns:
+        - step_order
+        - type
+        - config
+      filter:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+      check:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+  - role: editor
+    permission:
+      columns:
+        - step_order
+        - config
+      filter:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+      check:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
+delete_permissions:
+  - role: owner
+    permission:
+      filter:
+        workflow:
+          organization:
+            org_members:
+              user_id:
+                _eq: X-Hasura-User-Id
