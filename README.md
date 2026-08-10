@@ -56,17 +56,25 @@ NEXT_PUBLIC_FUNCTIONS_URL=http://localhost:3000
 
 > **No LLM key?** Leave `LLM_API_KEY` empty. The `llm_call` step will use a disclosed stub — 800ms artificial delay + fake response. This is explicitly allowed by the assignment spec and the UI shows stub responses clearly.
 
-### 3. Start nhost (applies migrations + metadata automatically)
+### 3. Start Backend Services
+
+**Option A: Using Docker Compose (Recommended if nhost CLI is not installed)**
 
 ```bash
-nhost up
+docker compose up -d
+# or: npm run db:up
 ```
 
 This starts:
 - PostgreSQL on port `5432`
-- Hasura on port `8080` (console at http://localhost:8080)
-- Auth service on port `4000`
-- Functions runtime on port `3000`
+- Hasura Engine on port `8080` (Console at http://localhost:8080)
+
+**Option B: Using nhost CLI**
+
+If you have `nhost` CLI installed (`sudo npm install -g nhost`):
+```bash
+nhost up
+```
 
 ### 4. Install function dependencies
 
@@ -77,7 +85,8 @@ cd nhost/functions && npm install && cd ../..
 ### 5. Seed demo data
 
 ```bash
-npx ts-node scripts/seed.ts
+npx tsx scripts/seed.ts
+# or: npm run seed
 ```
 
 This creates:
