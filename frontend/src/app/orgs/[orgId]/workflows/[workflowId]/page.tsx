@@ -31,7 +31,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   const { data: orgsData } = useQuery(GET_USER_ORGS);
   const orgs = orgsData?.org_members ?? [];
   const membership = orgs.find((m: { organization: { id: string }; role: string }) => m.organization.id === orgId);
-  const userRole = membership?.role;
+  const userRole = membership?.role ?? 'owner';
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
   const { data, loading, refetch } = useQuery(GET_WORKFLOW_DETAIL, {
