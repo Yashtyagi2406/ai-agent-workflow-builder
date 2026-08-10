@@ -63,6 +63,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
     } catch {
       // Fallback to direct HTTP fetch to functions server
       try {
+        const demoUserId = user?.id ?? (orgId === '7f18f670-cc04-42b3-b01c-515629a674e9' ? 'bc162e09-b10d-44ea-9734-1a2a066fe5a3' : 'aba1cfb2-3348-495a-9268-ac304fc0de0a');
         const fetchRes = await fetch('http://localhost:5005/triggerWorkflowRun', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -70,7 +71,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
             action: { name: 'triggerWorkflowRun' },
             input: { workflow_id: workflowId },
             session_variables: {
-              'x-hasura-user-id': 'aba1cfb2-3348-495a-9268-ac304fc0de0a',
+              'x-hasura-user-id': demoUserId,
               'x-hasura-role': userRole || 'owner',
             },
           }),
@@ -341,6 +342,7 @@ function RunsTab({
         {selectedRun ? (
           <RunPanel
             runId={selectedRun}
+            orgId={orgId}
             userRole={userRole}
             onApproved={() => {/* subscription updates automatically */}}
           />
