@@ -1,4 +1,25 @@
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
+
+// Parse root .env if present
+try {
+  const envPath = path.resolve(process.cwd(), '../../.env');
+  const rootEnvPath = path.resolve(process.cwd(), '.env');
+  const targetEnv = fs.existsSync(envPath) ? envPath : fs.existsSync(rootEnvPath) ? rootEnvPath : null;
+  if (targetEnv) {
+    const content = fs.readFileSync(targetEnv, 'utf8');
+    for (const line of content.split('\n')) {
+      const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+      if (match && !process.env[match[1]]) {
+        process.env[match[1]] = match[2]?.trim().replace(/^['"]|['"]$/g, '') ?? '';
+      }
+    }
+  }
+} catch {
+  // Ignore env read error
+}
+
 import triggerWorkflowRun from './triggerWorkflowRun';
 import approveStep from './approveStep';
 import webhookTrigger from './webhookTrigger';
