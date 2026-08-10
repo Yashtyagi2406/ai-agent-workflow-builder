@@ -167,12 +167,12 @@ export function StepList({ workflowId, steps: initialSteps, canEdit, userRole, o
                   <span className={`badge border ${stepTypeClass(step.type)} text-xs`}>
                     {STEP_TYPE_LABELS[step.type]}
                   </span>
-                  {step.config.prompt && (
+                  {Boolean(step.config.prompt) && (
                     <p className="text-slate-400 text-xs mt-1 truncate">
                       {String(step.config.prompt).slice(0, 60)}…
                     </p>
                   )}
-                  {step.config.url && (
+                  {Boolean(step.config.url) && (
                     <p className="text-slate-400 text-xs mt-1 truncate">{String(step.config.url)}</p>
                   )}
                 </div>

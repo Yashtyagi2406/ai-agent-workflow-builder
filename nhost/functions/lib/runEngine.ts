@@ -159,24 +159,24 @@ async function executeStep(
 ): Promise<StepExecutionResult> {
   switch (step.type) {
     case 'llm_call':
-      return executeLlmCall(step.config as LlmCallConfig, previousOutput);
+      return executeLlmCall(step.config as unknown as LlmCallConfig, previousOutput);
 
     case 'http_request':
-      return executeHttpRequest(step.config as HttpRequestConfig, previousOutput);
+      return executeHttpRequest(step.config as unknown as HttpRequestConfig, previousOutput);
 
     case 'db_write':
       return executeDbWrite(
-        step.config as DbWriteConfig,
+        step.config as unknown as DbWriteConfig,
         previousOutput,
         stepRunId,
         workflowRunId
       );
 
     case 'notify':
-      return executeNotify(step.config as NotifyConfig, previousOutput, workflowRunId);
+      return executeNotify(step.config as unknown as NotifyConfig, previousOutput, workflowRunId);
 
     case 'conditional_branch':
-      return executeConditionalBranch(step.config as ConditionalBranchConfig, previousOutput);
+      return executeConditionalBranch(step.config as unknown as ConditionalBranchConfig, previousOutput);
 
     case 'approval_gate':
       return executeApprovalGate();

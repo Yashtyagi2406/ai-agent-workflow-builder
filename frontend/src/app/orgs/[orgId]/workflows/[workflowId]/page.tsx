@@ -223,7 +223,7 @@ function WorkflowBuilderTab({
       <div className="lg:col-span-2">
         <StepList
           workflowId={workflow.id}
-          steps={workflow.workflow_steps}
+          steps={workflow.workflow_steps as any}
           canEdit={canEdit}
           userRole={userRole}
           onSaved={onRefetch}
@@ -232,7 +232,7 @@ function WorkflowBuilderTab({
       <div>
         <TriggerEditor
           workflowId={workflow.id}
-          triggers={workflow.workflow_triggers}
+          triggers={workflow.workflow_triggers as any}
           canEdit={canEdit}
           userRole={userRole}
           onSaved={onRefetch}
