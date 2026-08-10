@@ -5,9 +5,11 @@
 
 const HASURA_GRAPHQL_URL =
   process.env.HASURA_GRAPHQL_URL ||
-  `https://${process.env.NHOST_SUBDOMAIN}.hasura.${process.env.NHOST_REGION}.nhost.run/v1/graphql`;
+  (process.env.NHOST_SUBDOMAIN && process.env.NHOST_SUBDOMAIN !== 'local'
+    ? `https://${process.env.NHOST_SUBDOMAIN}.hasura.${process.env.NHOST_REGION}.nhost.run/v1/graphql`
+    : 'http://localhost:8080/v1/graphql');
 
-const HASURA_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || '';
+const HASURA_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || 'nhost-admin-secret';
 
 export async function gqlAdmin<T = Record<string, unknown>>(
   query: string,
@@ -155,43 +157,27 @@ export async function updateStepRun(
     approved_at?: string;
   }
 ) {
+  const _set: Record<string, unknown> = {
+    status: fields.status,
+    output: fields.output ?? null,
+    error: fields.error ?? null,
+    approved_by: fields.approved_by ?? null,
+    approved_at: fields.approved_at ?? null,
+    finished_at:
+      fields.status !== 'running' && fields.status !== 'paused_awaiting_approval'
+        ? new Date().toISOString()
+        : null,
+  };
+
+  if (fields.attempt_count !== undefined) {
+    _set.attempt_count = fields.attempt_count;
+  }
+
   await gqlAdmin(
-    `mutation UpdateStepRun(
-      $id: uuid!,
-      $status: String!,
-      $output: jsonb,
-      $error: String,
-      $attempt_count: Int,
-      $approved_by: uuid,
-      $approved_at: timestamptz,
-      $finished_at: timestamptz
-    ) {
-      update_step_runs_by_pk(
-        pk_columns: { id: $id },
-        _set: {
-          status: $status,
-          output: $output,
-          error: $error,
-          attempt_count: $attempt_count,
-          approved_by: $approved_by,
-          approved_at: $approved_at,
-          finished_at: $finished_at
-        }
-      ) { id }
+    `mutation UpdateStepRun($id: uuid!, $_set: step_runs_set_input!) {
+      update_step_runs_by_pk(pk_columns: { id: $id }, _set: $_set) { id }
     }`,
-    {
-      id: stepRunId,
-      status: fields.status,
-      output: fields.output ?? null,
-      error: fields.error ?? null,
-      attempt_count: fields.attempt_count ?? null,
-      approved_by: fields.approved_by ?? null,
-      approved_at: fields.approved_at ?? null,
-      finished_at:
-        fields.status !== 'running' && fields.status !== 'paused_awaiting_approval'
-          ? new Date().toISOString()
-          : null,
-    }
+    { id: stepRunId, _set }
   );
 }
 

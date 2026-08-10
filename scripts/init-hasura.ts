@@ -70,6 +70,13 @@ async function initHasura() {
   }
 
   // 4. Track relationships
+  await queryEndpoint('metadata', 'pg_create_array_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'organizations' },
+    name: 'org_members',
+    using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'org_members' }, column: 'org_id' } },
+  }).catch(() => {});
+
   await queryEndpoint('metadata', 'pg_create_object_relationship', {
     source: 'default',
     table: { schema: 'public', name: 'workflows' },
@@ -98,12 +105,126 @@ async function initHasura() {
     using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'workflow_runs' }, column: 'workflow_id' } },
   }).catch(() => {});
 
+  await queryEndpoint('metadata', 'pg_create_object_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'workflow_runs' },
+    name: 'workflow',
+    using: { foreign_key_constraint_on: 'workflow_id' },
+  }).catch(() => {});
+
   await queryEndpoint('metadata', 'pg_create_array_relationship', {
     source: 'default',
     table: { schema: 'public', name: 'workflow_runs' },
     name: 'step_runs',
     using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'step_runs' }, column: 'workflow_run_id' } },
   }).catch(() => {});
+
+  await queryEndpoint('metadata', 'pg_create_object_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'step_runs' },
+    name: 'workflow_run',
+    using: { foreign_key_constraint_on: 'workflow_run_id' },
+  }).catch(() => {});
+
+  await queryEndpoint('metadata', 'pg_create_object_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'step_runs' },
+    name: 'workflow_step',
+    using: { foreign_key_constraint_on: 'workflow_step_id' },
+  }).catch(() => {});
+
+  // 5. Apply Layer 1 permissions (select for owner, editor, viewer on workflows & org_members)
+  const roles = ['owner', 'editor', 'viewer'];
+  for (const role of roles) {
+    // workflows select permission
+    await queryEndpoint('metadata', 'pg_create_select_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'workflows' },
+      role,
+      permission: {
+        columns: '*',
+        filter: {
+          organization: {
+            org_members: {
+              user_id: { _eq: 'X-Hasura-User-Id' },
+            },
+          },
+        },
+      },
+    }).catch(() => {});
+
+    // organizations select permission
+    await queryEndpoint('metadata', 'pg_create_select_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'organizations' },
+      role,
+      permission: {
+        columns: '*',
+        filter: {
+          org_members: {
+            user_id: { _eq: 'X-Hasura-User-Id' },
+          },
+        },
+      },
+    }).catch(() => {});
+
+    // org_members select permission
+    await queryEndpoint('metadata', 'pg_create_select_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'org_members' },
+      role,
+      permission: {
+        columns: '*',
+        filter: {
+          organization: {
+            org_members: {
+              user_id: { _eq: 'X-Hasura-User-Id' },
+            },
+          },
+        },
+      },
+    }).catch(() => {});
+
+    // step_runs select permission
+    await queryEndpoint('metadata', 'pg_create_select_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'step_runs' },
+      role,
+      permission: {
+        columns: '*',
+        filter: {
+          workflow_run: {
+            workflow: {
+              organization: {
+                org_members: {
+                  user_id: { _eq: 'X-Hasura-User-Id' },
+                },
+              },
+            },
+          },
+        },
+      },
+    }).catch(() => {});
+
+    // workflow_runs select permission
+    await queryEndpoint('metadata', 'pg_create_select_permission', {
+      source: 'default',
+      table: { schema: 'public', name: 'workflow_runs' },
+      role,
+      permission: {
+        columns: '*',
+        filter: {
+          workflow: {
+            organization: {
+              org_members: {
+                user_id: { _eq: 'X-Hasura-User-Id' },
+              },
+            },
+          },
+        },
+      },
+    }).catch(() => {});
+  }
 
   // Reload metadata
   await queryEndpoint('metadata', 'reload_metadata', {});
