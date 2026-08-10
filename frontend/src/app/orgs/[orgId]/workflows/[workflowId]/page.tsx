@@ -30,20 +30,25 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
   // ── Demo session ──────────────────────────────────────────────────────────
-  // Read who is logged in from localStorage so we can scope every query to
-  // only the data owned by that specific user / org.
+  // IMPORTANT: localStorage is only available client-side. We gate every query
+  // behind sessionLoaded so that on the very first render (demoSession=null)
+  // no data is fetched before we know who the user is.
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const [demoSession, setDemoSessionState] = useState<DemoSession | null>(null);
-  useEffect(() => { setDemoSessionState(getDemoSession()); }, []);
+  useEffect(() => {
+    setDemoSessionState(getDemoSession());
+    setSessionLoaded(true);
+  }, []);
 
   // Fast guard: if the session org doesn't match the URL org the user is
   // attempting cross-org access — block immediately, don't even fire queries.
   const sessionOrgMismatch =
-    demoSession !== null && demoSession.orgId !== orgId;
+    sessionLoaded && demoSession !== null && demoSession.orgId !== orgId;
 
   // ── User orgs (scoped to current demo user) ───────────────────────────────
   const { data: orgsData } = useQuery(GET_USER_ORGS, {
     variables: { user_id: demoSession?.userId ?? '' },
-    skip: !demoSession?.userId || sessionOrgMismatch,
+    skip: !sessionLoaded || !demoSession?.userId || sessionOrgMismatch,
   });
   const orgs = orgsData?.org_members ?? [];
   const membership = orgs.find(
@@ -58,7 +63,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   // ── Workflow detail (filtered by BOTH id AND org_id) ─────────────────────
   const { data, loading, refetch } = useQuery(GET_WORKFLOW_DETAIL, {
     variables: { id: workflowId, org_id: orgId },
-    skip: !workflowId || sessionOrgMismatch,
+    skip: !workflowId || !sessionLoaded || sessionOrgMismatch,
   });
 
   // Query now returns workflows[] (not workflows_by_pk) so we take index 0.

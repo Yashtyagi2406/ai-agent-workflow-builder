@@ -31,12 +31,16 @@ export default function OrgDashboard({ params }: PageProps) {
   const router = useRouter();
   const { signOut } = useSignOut();
 
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const [demoSession, setDemoSessionState] = useState<DemoSession | null>(null);
-  useEffect(() => { setDemoSessionState(getDemoSession()); }, []);
+  useEffect(() => {
+    setDemoSessionState(getDemoSession());
+    setSessionLoaded(true);
+  }, []);
 
   const { data: userOrgsData, loading: userOrgsLoading } = useQuery(GET_USER_ORGS, {
     variables: { user_id: demoSession?.userId ?? '' },
-    skip: !demoSession?.userId,
+    skip: !sessionLoaded || !demoSession?.userId,
   });
   const { data: directOrgData, loading: directOrgLoading } = useQuery(GET_ORG_BY_PK, {
     variables: { id: orgId },
