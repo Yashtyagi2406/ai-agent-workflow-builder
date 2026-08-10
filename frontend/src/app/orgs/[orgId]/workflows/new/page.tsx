@@ -43,7 +43,31 @@ export default function NewWorkflowPage({ params }: PageProps) {
         name: name.trim(),
         description: description.trim() || null,
         created_by: userId,
-        steps: [],
+        steps: [
+          {
+            step_order: 1,
+            type: 'llm_call',
+            config: {
+              prompt: 'Analyze this workflow task and generate a concise executive summary.',
+              model: 'llama-3.3-70b-versatile',
+            },
+          },
+          {
+            step_order: 2,
+            type: 'approval_gate',
+            config: {
+              message: 'Require human review before notifying.',
+            },
+          },
+          {
+            step_order: 3,
+            type: 'notify',
+            config: {
+              channel: 'email',
+              recipient: 'admin@organization.com',
+            },
+          },
+        ],
         triggers: [{ type: 'manual', config: {} }],
       },
     });
