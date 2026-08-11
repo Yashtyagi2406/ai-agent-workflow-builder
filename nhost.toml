@@ -1,0 +1,14 @@
+[global]
+[[global.environment]]
+  name = "HASURA_GRAPHQL_DATABASE_URL"
+  value = "{{ secrets.HASURA_GRAPHQL_DATABASE_URL }}"
+
+[hasura]
+version = "v2.36.0"
+adminSecret = "{{ secrets.HASURA_GRAPHQL_ADMIN_SECRET }}"
+[hasura.jwtSecrets]
+  type = "HS256"
+  key = "{{ secrets.HASURA_GRAPHQL_JWT_SECRET }}"
+
+[functions]
+node_version = 18
