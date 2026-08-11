@@ -1,212 +1,160 @@
 # FlowMind — AI Agent Workflow Builder
 
-A full-stack application for chaining AI agent steps into automated workflows, built with nhost (Postgres + Hasura + Auth + Functions) and Next.js 14.
-
-## Features
-
-- **6 step types**: `llm_call`, `http_request`, `db_write`, `notify`, `conditional_branch`, `approval_gate`
-- **4 trigger types**: Manual, Webhook, Scheduled (cron), Database Event
-- **Two permission layers**: org + role scoping (Hasura) + step-level gating (DB trigger + Action handler)
-- **Live subscriptions**: Step-by-step progress with no page refresh
-- **Approval gate**: Workflow pauses mid-execution; approver resumes via Action handler with re-verified role check
+A full-stack autonomous AI agent workflow builder and execution engine built with **Nhost** (Postgres + Hasura + Auth + Serverless Functions) and **Next.js 14** (App Router, Apollo Client, TailwindCSS, Glassmorphism UI).
 
 ---
 
-## Prerequisites
+## 🌟 Live Demo Deployments
 
-- [nhost CLI](https://docs.nhost.io/local-development) v1.x
-- Docker + Docker Compose
-- Node.js 18+
-- `npx ts-node` for the seed script
+- 🚀 **Live Frontend (Vercel)**: [https://ai-agent-workflow-builder-flax.vercel.app](https://ai-agent-workflow-builder-flax.vercel.app)
+- ⚡ **Live GraphQL Engine (Nhost Cloud)**: `https://clhxwjtdykywhpltopmh.hasura.ap-south-1.nhost.run/v1/graphql`
+- ⚙️ **Live Serverless Functions**: `https://clhxwjtdykywhpltopmh.functions.ap-south-1.nhost.run/v1`
 
 ---
 
-## Local Setup
+## ✨ Features
 
-### 1. Clone and install
+- **6 Step Types**:
+  - 🤖 `llm_call`: Execute AI prompts via Groq Llama 3.3 70B (with automatic fallback stub).
+  - 🌐 `http_request`: Perform GET/POST REST calls to external APIs.
+  - 💾 `db_write`: Append structured audit results directly into PostgreSQL.
+  - 🔔 `notify`: Send alerts to team channels or email.
+  - 🔀 `conditional_branch`: Evaluate JSON logic expressions dynamically to branch execution.
+  - ⏸️ `approval_gate`: Pause workflow execution mid-flight until an authorized owner/editor approves.
+- **4 Trigger Mechanisms**: Manual execution, Webhook endpoints, Scheduled Cron jobs, and DB Event Triggers.
+- **Strict Multi-Tenancy & Access Control**:
+  - Hasura Row-Level Security (RLS) + org-level & role-level checks (`owner`, `editor`, `viewer`).
+  - Strict cross-org isolation (Org B cannot view/edit/trigger Org A workflows even by pasting real URLs).
+- **Live GraphQL Subscriptions**: Real-time step progress and status updates without page refresh.
+
+---
+
+## 🔑 One-Click Demo Credentials
+
+You can use the one-click demo buttons on the login screen, or sign in manually with these pre-seeded accounts (Password: `Password123!`):
+
+| Role | Email | Organization | Permissions |
+| :--- | :--- | :--- | :--- |
+| 👑 **Org A Owner** | `owner-orga@example.com` | Org A — AI Research | Full create, run, edit, approve & delete permissions |
+| ✏️ **Org A Editor** | `editor-orga@example.com` | Org A — AI Research | Create, run, edit & approve permissions |
+| 🏢 **Org B Owner** | `owner-orgb@example.com` | Org B — Data Team | Full owner access for Org B (Isolated from Org A) |
+| 👁️ **Org B Viewer** | `viewer-orgb@example.com` | Org B — Data Team | Read-only view permissions |
+
+---
+
+## ⚡ Quick Start (Local Setup)
+
+### 1. Clone & Install Dependencies
 
 ```bash
 git clone https://github.com/Yashtyagi2406/ai-agent-workflow-builder.git
 cd ai-agent-workflow-builder
+npm install
 ```
 
-### 2. Configure environment
+### 2. Environment Configuration
+
+Copy `.env.example` to `.env`:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and fill in:
-
-```
-# For local dev (nhost CLI), these are automatically set:
+`.env` configuration:
+```env
+# Local Hasura & Functions
 HASURA_GRAPHQL_ADMIN_SECRET=nhost-admin-secret
-NHOST_SUBDOMAIN=local
-NHOST_REGION=
+HASURA_GRAPHQL_URL=http://localhost:8080/v1/graphql
 
-# Optional — for real LLM calls:
-LLM_API_KEY=your_groq_api_key_here
-LLM_PROVIDER=groq  # or openrouter
+# Groq LLM API Key (optional — leave blank to use disclosed artificial delay stub)
+LLM_API_KEY=your_groq_api_key
+LLM_PROVIDER=groq
 
-# Frontend (same values for local):
+# Frontend Environment Variables
 NEXT_PUBLIC_NHOST_SUBDOMAIN=local
 NEXT_PUBLIC_NHOST_REGION=
-NEXT_PUBLIC_FUNCTIONS_URL=http://localhost:3000
+NEXT_PUBLIC_HASURA_URL=http://localhost:8080/v1/graphql
+NEXT_PUBLIC_FUNCTIONS_URL=http://localhost:5005
 ```
 
-> **No LLM key?** Leave `LLM_API_KEY` empty. The `llm_call` step will use a disclosed stub — 800ms artificial delay + fake response. This is explicitly allowed by the assignment spec and the UI shows stub responses clearly.
-
-### 3. Start Backend Services
-
-**Option A: Using Docker Compose (Recommended if nhost CLI is not installed)**
+### 3. Start Backend Services (Docker Compose)
 
 ```bash
-docker compose up -d
-# or: npm run db:up
+npm run db:up
 ```
 
 This starts:
-- PostgreSQL on port `5432`
-- Hasura Engine on port `8080` (Console at http://localhost:8080)
+- **PostgreSQL 15** on port `5432`
+- **Hasura GraphQL Engine** on port `8080` (Console available at `http://localhost:8080`)
 
-**Option B: Using nhost CLI**
-
-If you have `nhost` CLI installed (`sudo npm install -g nhost`):
-```bash
-nhost up
-```
-
-### 4. Install function dependencies
+### 4. Initialize Schema & Seed Demo Data
 
 ```bash
-cd nhost/functions && npm install && cd ../..
+npm run seed
 ```
 
-### 5. Seed demo data
+This runs database migrations, tracks Hasura relationships, sets up action endpoints, and seeds Org A and Org B accounts and sample workflows.
+
+### 5. Start Development Servers
+
+In separate terminals:
 
 ```bash
-npx tsx scripts/seed.ts
-# or: npm run seed
+# Terminal 1: Functions Server (Port 5005)
+npm run dev:functions
+
+# Terminal 2: Next.js Frontend (Port 3000)
+npm run dev:frontend
 ```
 
-This creates:
-- **Org A** with 2 users: `owner-orga@example.com` (owner) and `editor-orga@example.com` (editor)
-- **Org B** with 2 users: `owner-orgb@example.com` (owner) and `viewer-orgb@example.com` (viewer)
-- A sample 5-step workflow in Org A with manual + webhook triggers
-
-All passwords: `Password123!`
-
-### 6. Run the frontend
-
-```bash
-cd frontend && npm install && npm run dev
-```
-
-Open http://localhost:3001
+Open `http://localhost:3000` in your browser.
 
 ---
 
-## Local Hasura Console
+## 🧪 Webhook Integration
 
-Open http://localhost:8080 — admin secret is `nhost-admin-secret` for local dev.
-
----
-
-## Final Task Scenario (End-to-End Demo)
-
-### Prerequisites
-- Seed script must have run successfully
-
-### Step 1: Two orgs exist
-Log in as `owner-orga@example.com` — see Org A. Open a different browser/incognito and log in as `owner-orgb@example.com` — see Org B. Separate orgs, separate data.
-
-### Step 2: Build a workflow (Org A)
-The seed script creates a demo workflow with: `llm_call → http_request → conditional_branch → approval_gate → db_write`.
-
-### Step 3: Trigger manually
-Click **Run Workflow** — watch the live subscription update each step in real time without a page refresh.
-
-### Step 4: Trigger via webhook
-```bash
-curl -X POST http://localhost:3000/webhookTrigger \
-  -H "Content-Type: application/json" \
-  -d '{"input":{"workflow_id":"WORKFLOW_ID_HERE","api_key":"demo-webhook-api-key-org-a-2024"}}'
-```
-A new run appears in the run history live.
-
-### Step 5: Approval gate
-When the run hits the `approval_gate` step, the run pauses. An amber banner appears. Click **Approve & Continue** — the run resumes and completes.
-
-### Step 6: Cross-org isolation test
-As Org B's owner (`owner-orgb@example.com`):
-1. Try navigating to `/orgs/ORG_A_ID` — shows 404 or empty
-2. Try triggering Org A's workflow via GraphQL:
-   ```graphql
-   mutation { triggerWorkflowRun(workflow_id: "ORG_A_WORKFLOW_ID") { status } }
-   ```
-   → Returns 403 (not a member of that org)
-3. Try querying Org A's step_runs directly → returns empty array (Hasura row filter)
-
----
-
-## Webhook Trigger
-
-Find the API key in the workflow's Triggers tab, or in the DB at `workflow_triggers.config.api_key`.
+Trigger any workflow externally via HTTP POST:
 
 ```bash
-curl -X POST http://localhost:3000/webhookTrigger \
+curl -X POST https://clhxwjtdykywhpltopmh.functions.ap-south-1.nhost.run/v1/webhookTrigger \
   -H "Content-Type: application/json" \
   -d '{
     "input": {
-      "workflow_id": "your-workflow-uuid",
-      "api_key": "your-api-key"
+      "workflow_id": "7f937382-7028-4798-8aab-548f3116fbdf",
+      "api_key": "demo-webhook-api-key-org-a-2024",
+      "payload": { "query": "Latest AI trends 2026" }
     }
   }'
 ```
 
 ---
 
-## Deployment
-
-### nhost Cloud
-1. Create a project at [app.nhost.io](https://app.nhost.io)
-2. `nhost deploy` — applies migrations + metadata to cloud
-3. Set secrets: `LLM_API_KEY`, etc.
-
-### Vercel (Frontend)
-```bash
-cd frontend
-vercel --prod
-```
-Set env vars: `NEXT_PUBLIC_NHOST_SUBDOMAIN`, `NEXT_PUBLIC_NHOST_REGION`, `NEXT_PUBLIC_FUNCTIONS_URL`.
-
----
-
-## Project Structure
+## 📁 Repository Structure
 
 ```
 ├── nhost/
-│   ├── migrations/default/     # 8 PostgreSQL migrations
-│   ├── metadata/               # Hasura metadata (relationships, permissions, actions, cron)
-│   └── functions/              # Serverless functions
-│       ├── lib/
-│       │   ├── types.ts        # TypeScript types
-│       │   ├── db.ts           # Admin GraphQL client
-│       │   ├── auth.ts         # Auth/quota helpers
-│       │   ├── runEngine.ts    # Core step execution loop
-│       │   └── steps/          # Step type handlers (llmCall, httpRequest, etc.)
+│   ├── migrations/default/     # PostgreSQL schema migrations
+│   ├── metadata/               # Hasura metadata (relationships, permissions, actions)
+│   └── functions/              # Serverless Functions
 │       ├── triggerWorkflowRun.ts
 │       ├── approveStep.ts
 │       ├── webhookTrigger.ts
 │       ├── scheduledRunner.ts
-│       └── eventTriggerHandler.ts
+│       └── server.ts           # Local Node/Express runner
 ├── frontend/
 │   └── src/
-│       ├── app/                # Next.js 14 App Router pages
-│       ├── components/         # React components
-│       ├── graphql/            # Queries, mutations, subscriptions
-│       ├── lib/                # Apollo Client, nhost client
-│       └── styles/             # Global CSS (glassmorphism dark theme)
+│       ├── app/                # Next.js App Router pages
+│       ├── components/         # WorkflowBuilder, RunStatus, QuotaIndicator
+│       ├── graphql/            # Queries, Mutations, Subscriptions
+│       └── lib/                # Apollo Client & DemoSession context
 └── scripts/
-    └── seed.ts                 # Demo data seeding script
+    ├── init-hasura.ts          # Schema & relationship initialization
+    ├── seed.ts                 # Demo data seeder
+    └── demo-webhook-curl.sh    # Webhook cURL test script
 ```
+
+---
+
+## 🛡️ License
+
+MIT License. Developed for the AI Agent Workflow Builder Challenge.
