@@ -73,7 +73,8 @@ export function RunPanel({ runId, orgId, userRole, onApproved }: RunPanelProps) 
       // Fallback to direct HTTP fetch
       try {
         const demoUserId = (orgId === '7f18f670-cc04-42b3-b01c-515629a674e9' ? 'bc162e09-b10d-44ea-9734-1a2a066fe5a3' : 'aba1cfb2-3348-495a-9268-ac304fc0de0a');
-        const fetchRes = await fetch('http://localhost:5005/approveStep', {
+        const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_URL || 'http://localhost:5005';
+        const fetchRes = await fetch(`${functionsBase}/approveStep`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

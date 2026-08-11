@@ -337,7 +337,7 @@ async function initHasura() {
     ],
   }).catch(() => {});
 
-  const functionsUrl = process.env.NHOST_FUNCTIONS_URL || 'http://host.docker.internal:5005';
+  const functionsUrl = process.env.NHOST_FUNCTIONS_URL || process.env.NEXT_PUBLIC_FUNCTIONS_URL || 'http://host.docker.internal:5005';
 
   await queryEndpoint('metadata', 'create_action', {
     name: 'triggerWorkflowRun',

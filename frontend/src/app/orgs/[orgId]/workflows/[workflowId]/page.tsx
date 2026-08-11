@@ -93,7 +93,8 @@ export default function WorkflowDetailPage({ params }: PageProps) {
       // Fallback to direct HTTP fetch to functions server
       try {
         const demoUserId = user?.id ?? demoSession?.userId ?? 'aba1cfb2-3348-495a-9268-ac304fc0de0a';
-        const fetchRes = await fetch('http://localhost:5005/triggerWorkflowRun', {
+        const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_URL || 'http://localhost:5005';
+        const fetchRes = await fetch(`${functionsBase}/triggerWorkflowRun`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
