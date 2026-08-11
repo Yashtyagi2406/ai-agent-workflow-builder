@@ -23,13 +23,16 @@ const GRAPHQL_WS_URL =
     ? `wss://${NHOST_SUBDOMAIN}.hasura.${NHOST_REGION}.nhost.run/v1/graphql`
     : 'ws://localhost:8080/v1/graphql';
 
+const HASURA_ADMIN_SECRET =
+  process.env.NEXT_PUBLIC_HASURA_ADMIN_SECRET || 'nhost-admin-secret';
+
 export function createApolloClient(accessToken: string | null) {
   const authLink = setContext((_, { headers }) => ({
     headers: {
       ...headers,
       ...(accessToken
         ? { Authorization: `Bearer ${accessToken}` }
-        : { 'x-hasura-admin-secret': 'nhost-admin-secret' }),
+        : { 'x-hasura-admin-secret': HASURA_ADMIN_SECRET }),
     },
   }));
 
@@ -43,7 +46,7 @@ export function createApolloClient(accessToken: string | null) {
             connectionParams: () => ({
               headers: accessToken
                 ? { Authorization: `Bearer ${accessToken}` }
-                : { 'x-hasura-admin-secret': 'nhost-admin-secret' },
+                : { 'x-hasura-admin-secret': HASURA_ADMIN_SECRET },
             }),
           })
         )

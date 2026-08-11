@@ -32,7 +32,7 @@ export default function LoginPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-hasura-admin-secret': 'nhost-admin-secret',
+          'x-hasura-admin-secret': process.env.NEXT_PUBLIC_HASURA_ADMIN_SECRET || 'nhost-admin-secret',
         },
         body: JSON.stringify({
           query: `query GetOrgs { organizations(order_by: { name: asc }) { id name } }`,
