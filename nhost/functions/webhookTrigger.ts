@@ -25,10 +25,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const body = await readBody(req);
+  // Parse body (supports pre-parsed req.body in Nhost Cloud and raw stream)
   let input: { input: WebhookTriggerInput };
   try {
-    input = JSON.parse(body);
+    const reqAny = req as any;
+    if (reqAny.body) {
+      input = typeof reqAny.body === 'string' ? JSON.parse(reqAny.body) : reqAny.body;
+    } else {
+      const body = await readBody(req);
+      input = JSON.parse(body);
+    }
   } catch {
     res.writeHead(400).end(JSON.stringify({ message: 'Invalid JSON' }));
     return;
