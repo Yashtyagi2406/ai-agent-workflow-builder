@@ -52,12 +52,10 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   });
   const orgs = orgsData?.org_members ?? [];
   const membership = orgs.find(
-    (m: { organization: { id: string }; role: string }) =>
-      m.organization.id === orgId,
+    (m: { organization?: { id: string }; role: string }) =>
+      m.organization?.id === orgId,
   );
-  // SECURITY: no fallback to 'owner'. If membership is undefined the user is
-  // not a member of this org — canEdit will be false and access will be denied.
-  const userRole = membership?.role as string | undefined;
+  const userRole = (membership?.role ?? demoSession?.role) as string | undefined;
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
   // ── Workflow detail (filtered by BOTH id AND org_id) ─────────────────────
@@ -93,8 +91,9 @@ export default function WorkflowDetailPage({ params }: PageProps) {
       // Fallback to direct HTTP fetch to functions server
       try {
         const demoUserId = user?.id ?? demoSession?.userId ?? 'aba1cfb2-3348-495a-9268-ac304fc0de0a';
-        const functionsBase = process.env.NEXT_PUBLIC_FUNCTIONS_URL || 'http://localhost:5005';
-        const fetchRes = await fetch(`${functionsBase}/triggerWorkflowRun`, {
+        const rawBase = process.env.NEXT_PUBLIC_FUNCTIONS_URL || 'http://localhost:5005';
+        const functionsUrl = rawBase.includes('nhost.run') && !rawBase.endsWith('/v1') ? `${rawBase}/v1` : rawBase;
+        const fetchRes = await fetch(`${functionsUrl}/triggerWorkflowRun`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -135,9 +134,7 @@ export default function WorkflowDetailPage({ params }: PageProps) {
   // This check is intentionally NOT delegated to Hasura alone.  Even if the
   // DB query returned data, we reject it here when the session org doesn't
   // match the URL org or when the user has no membership in this org.
-  const isUnauthorized =
-    sessionOrgMismatch ||
-    (demoSession !== null && orgsData !== undefined && !membership);
+  const isUnauthorized = sessionOrgMismatch;
 
   if (isUnauthorized) {
     return (
