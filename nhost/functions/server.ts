@@ -30,10 +30,15 @@ const PORT = process.env.FUNCTIONS_PORT ? parseInt(process.env.FUNCTIONS_PORT, 1
 
 const routes: Record<string, (req: http.IncomingMessage, res: http.ServerResponse) => Promise<void>> = {
   '/triggerWorkflowRun': triggerWorkflowRun,
+  '/v1/triggerWorkflowRun': triggerWorkflowRun,
   '/approveStep': approveStep,
+  '/v1/approveStep': approveStep,
   '/webhookTrigger': webhookTrigger,
+  '/v1/webhookTrigger': webhookTrigger,
   '/scheduledRunner': scheduledRunner,
+  '/v1/scheduledRunner': scheduledRunner,
   '/eventTriggerHandler': eventTriggerHandler,
+  '/v1/eventTriggerHandler': eventTriggerHandler,
 };
 
 const server = http.createServer(async (req, res) => {

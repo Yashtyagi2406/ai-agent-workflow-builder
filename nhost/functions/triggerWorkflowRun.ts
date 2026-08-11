@@ -9,6 +9,15 @@ interface TriggerInput {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-hasura-user-id, x-hasura-role, x-hasura-admin-secret');
+
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.writeHead(405).end('Method Not Allowed');
     return;
