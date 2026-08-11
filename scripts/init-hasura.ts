@@ -97,6 +97,13 @@ async function initHasura() {
     using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'org_members' }, column: 'org_id' } },
   }).catch(() => {});
 
+  await queryEndpoint('metadata', 'pg_create_array_relationship', {
+    source: 'default',
+    table: { schema: 'public', name: 'organizations' },
+    name: 'workflows',
+    using: { foreign_key_constraint_on: { table: { schema: 'public', name: 'workflows' }, column: 'org_id' } },
+  }).catch(() => {});
+
   await queryEndpoint('metadata', 'pg_create_object_relationship', {
     source: 'default',
     table: { schema: 'public', name: 'workflows' },
