@@ -14,10 +14,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const body = await readBody(req);
+  // Parse body (supports both pre-parsed req.body in Nhost Cloud and raw stream)
   let payload: HasuraActionPayload<ApproveInput>;
   try {
-    payload = JSON.parse(body);
+    const reqAny = req as any;
+    if (reqAny.body) {
+      payload = typeof reqAny.body === 'string' ? JSON.parse(reqAny.body) : reqAny.body;
+    } else {
+      const raw = await readBody(req);
+      payload = JSON.parse(raw);
+    }
   } catch {
     res.writeHead(400).end(JSON.stringify({ message: 'Invalid JSON' }));
     return;

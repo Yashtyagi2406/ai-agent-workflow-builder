@@ -9,7 +9,10 @@ const HASURA_GRAPHQL_URL =
     ? `https://${process.env.NHOST_SUBDOMAIN}.hasura.${process.env.NHOST_REGION}.nhost.run/v1/graphql`
     : 'http://localhost:8080/v1/graphql');
 
-const HASURA_ADMIN_SECRET = process.env.HASURA_GRAPHQL_ADMIN_SECRET || 'nhost-admin-secret';
+const HASURA_ADMIN_SECRET =
+  process.env.HASURA_GRAPHQL_ADMIN_SECRET ||
+  process.env.NEXT_PUBLIC_HASURA_ADMIN_SECRET ||
+  'md$f%,AOGhMYR,jJ$:fsf+gT*X\'iSdsz';
 
 export async function gqlAdmin<T = Record<string, unknown>>(
   query: string,
